@@ -40,7 +40,7 @@ const Home: React.FC = () => {
   };
 
   const handleRestaurantPress = (restaurantId: string) => {
-    router.push(`/(tabs)/restaurant/${restaurantId}`);
+    router.push(`/restaurant/${restaurantId}`);
   };
 
   return (

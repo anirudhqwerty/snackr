@@ -2,6 +2,7 @@
  * Authentication context for managing user session and tokens
  */
 
+import axios from "axios";
 import React, { createContext, useCallback, useEffect, useState } from "react";
 import * as authAPI from "../api/auth.api";
 import { clearTokens as clientClearTokens, setTokens } from "../api/client";
@@ -52,17 +53,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setAccessToken(tokens.accessToken);
 
           // Verify session is still valid
-          const isValid = await authAPI.verifySession(tokens.accessToken);
-          if (isValid && isValid.user) {
-            setUser(isValid.user);
-          } else {
-            // Tokens expired, clear them
-            await storageClearTokens();
-            clientClearTokens();
+          try {
+            const isValid = await authAPI.verifySession(tokens.accessToken);
+            if (isValid && isValid.user) {
+              setUser(isValid.user);
+            } else {
+              // Tokens expired, clear them
+              await storageClearTokens();
+              clientClearTokens();
+            }
+          } catch (error) {
+            const isUnauthorized =
+              axios.isAxiosError(error) &&
+              error.response?.status === 401;
+            if (isUnauthorized) {
+              await storageClearTokens();
+              clientClearTokens();
+            } else {
+              throw error;
+            }
           }
         }
       } catch (error) {
-        console.error("Failed to initialize auth:", error);
+        const isUnauthorized =
+          axios.isAxiosError(error) && error.response?.status === 401;
+        if (isUnauthorized) {
+          await storageClearTokens();
+          clientClearTokens();
+        } else {
+          console.error("Failed to initialize auth:", error);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -168,6 +188,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       return false;
     } catch (error) {
+      const isUnauthorized =
+        axios.isAxiosError(error) && error.response?.status === 401;
+      if (isUnauthorized) {
+        await storageClearTokens();
+        clientClearTokens();
+        return false;
+      }
       console.error("Session verification failed:", error);
       return false;
     }
