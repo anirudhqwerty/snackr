@@ -1,0 +1,185 @@
+version: "3.8"
+
+services:
+  # Auth Service & Database
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DB_HOST: auth-postgres
+      DB_PORT: 5432
+      DB_NAME: auth_db
+      DB_USER: auth_user
+      DB_PASSWORD: auth_password
+      DB_SSL: "false"
+    depends_on:
+      - auth-postgres
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+  auth-postgres:
+    image: postgres:15-alpine
+    container_name: auth-postgres
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_password
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+  # User Service & Database
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      DB_HOST: user-postgres
+      DB_PORT: 5432
+      DB_NAME: user_db
+      DB_USER: user_user
+      DB_PASSWORD: user_password
+      DB_SSL: "false"
+    depends_on:
+      - user-postgres
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+  user-postgres:
+    image: postgres:15-alpine
+    container_name: user-postgres
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: user_user
+      POSTGRES_PASSWORD: user_password
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+  # Restaurant Service & Database
+  restaurant-service:
+    build: ./restaurant-service
+    container_name: restaurant-service
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DB_HOST: restaurant-postgres
+      DB_PORT: 5432
+      DB_NAME: restaurant_db
+      DB_USER: restaurant_user
+      DB_PASSWORD: restaurant_password
+      DB_SSL: "false"
+    depends_on:
+      - restaurant-postgres
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+  restaurant-postgres:
+    image: postgres:15-alpine
+    container_name: restaurant-postgres
+    environment:
+      POSTGRES_DB: restaurant_db
+      POSTGRES_USER: restaurant_user
+      POSTGRES_PASSWORD: restaurant_password
+    volumes:
+      - restaurant-db-data:/var/lib/postgresql/data
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+  # Order Service & Database
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "3004:3004"
+    environment:
+      NODE_ENV: development
+      PORT: 3004
+      DB_HOST: order-postgres
+      DB_PORT: 5432
+      DB_NAME: order_db
+      DB_USER: order_user
+      DB_PASSWORD: order_password
+      DB_SSL: "false"
+    depends_on:
+      - order-postgres
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+  order-postgres:
+    image: postgres:15-alpine
+    container_name: order-postgres
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: order_user
+      POSTGRES_PASSWORD: order_password
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+  # Delivery Service & Database
+  delivery-service:
+    build: ./delivery-service
+    container_name: delivery-service
+    ports:
+      - "3005:3005"
+    environment:
+      NODE_ENV: development
+      PORT: 3005
+      DB_HOST: delivery-postgres
+      DB_PORT: 5432
+      DB_NAME: delivery_db
+      DB_USER: delivery_user
+      DB_PASSWORD: delivery_password
+      DB_SSL: "false"
+    depends_on:
+      - delivery-postgres
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+  delivery-postgres:
+    image: postgres:15-alpine
+    container_name: delivery-postgres
+    environment:
+      POSTGRES_DB: delivery_db
+      POSTGRES_USER: delivery_user
+      POSTGRES_PASSWORD: delivery_password
+    volumes:
+      - delivery-db-data:/var/lib/postgresql/data
+    networks:
+      - snackr-network
+    restart: unless-stopped
+
+# Networks
+networks:
+  snackr-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  auth-db-data:
+  user-db-data:
+  restaurant-db-data:
+  order-db-data:
+  delivery-db-data:

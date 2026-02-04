@@ -1,24 +1,49 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { Stack, useRouter } from "expo-router";
+import React, { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AuthProvider, useAuth } from "../lib/auth/context";
+import { CartProvider } from "../lib/context/CartContext";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+function RootNavigator() {
+  const router = useRouter();
+  const { isLoading, isSignedIn } = useAuth();
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+  // Handle navigation based on auth state
+  useEffect(() => {
+    if (isLoading) {
+      return; // Still loading, wait for auth state
+    }
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+    if (isSignedIn) {
+      // User is logged in, go to tabs
+      router.replace("/(tabs)");
+    } else {
+      // User is not logged in, go to auth
+      router.replace("/(auth)/login");
+    }
+  }, [isLoading, isSignedIn, router]);
 
+  if (isLoading) {
+    // Show loading screen while checking auth state
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
+
+export default function Layout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <CartProvider>
+          <RootNavigator />
+        </CartProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
