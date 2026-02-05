@@ -9,7 +9,7 @@ const PORT = 5000;
 app.use(express.json());
 
 // health check
-app.get("/health", (req, res) => {
+app.get("/auth/health", (req, res) => {
   res.json({ status: "auth service running" });
 });
 
