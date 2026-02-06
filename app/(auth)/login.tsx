@@ -79,6 +79,13 @@ export default function Login() {
           {loading ? "Logging in..." : "Login"}
         </Text>
       </Pressable>
+
+      <Pressable
+        style={styles.linkButton}
+        onPress={() => router.push("/register")}
+      >
+        <Text style={styles.linkText}>Create an account</Text>
+      </Pressable>
     </View>
   );
 }
@@ -120,5 +127,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
     fontSize: 16,
+  },
+  linkButton: {
+    marginTop: 16,
+    alignSelf: "center",
+  },
+  linkText: {
+    color: "#111",
+    fontSize: 14,
   },
 });
