@@ -1,28 +1,47 @@
-import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { apiRequest } from "../../lib/api";
-import { getToken } from "../../lib/auth";
+import { getToken, removeToken } from "../../lib/auth";
 
 export default function VendorHome() {
   const [foodName, setFoodName] = useState("");
   const [foods, setFoods] = useState<any[]>([]);
 
   async function loadFoods() {
-    const token = await getToken();
+    try {
+      const token = await getToken();
+      // Ensure we handle cases where the token is missing/invalid
+      if (!token) return;
 
-    const data = await apiRequest("/food", "GET", undefined, token);
-    setFoods(data);
+      const data = await apiRequest(
+        "/food",
+        "GET",
+        undefined,
+        token || undefined,
+      );
+      setFoods(data);
+    } catch (e) {
+      console.error("Failed to load foods", e);
+    }
   }
 
   async function addFood() {
     if (!foodName.trim()) return;
 
-    const token = await getToken();
+    try {
+      const token = await getToken();
+      await apiRequest("/food", "POST", { name: foodName }, token);
+      setFoodName("");
+      loadFoods();
+    } catch (e) {
+      alert("Failed to add food. Check server connection.");
+    }
+  }
 
-    await apiRequest("/food", "POST", { name: foodName }, token);
-
-    setFoodName("");
-    loadFoods();
+  async function handleLogout() {
+    await removeToken();
+    router.replace("/login");
   }
 
   useEffect(() => {
@@ -31,7 +50,12 @@ export default function VendorHome() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Vendor Home</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Vendor Home</Text>
+        <Pressable onPress={handleLogout} style={styles.logoutButton}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </Pressable>
+      </View>
 
       <TextInput
         style={styles.input}
@@ -62,11 +86,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    marginTop: 40, // Added margin for status bar safety
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
   },
   title: {
     fontSize: 22,
     fontWeight: "600",
-    marginBottom: 16,
+  },
+  logoutButton: {
+    padding: 8,
+  },
+  logoutText: {
+    color: "red",
+    fontWeight: "600",
   },
   input: {
     borderWidth: 1,
@@ -84,6 +121,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     textAlign: "center",
+    fontWeight: "600",
   },
   sectionTitle: {
     fontSize: 16,
@@ -91,9 +129,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   listItem: {
-    paddingVertical: 6,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   muted: {
     color: "#666",
+    fontStyle: "italic",
   },
 });

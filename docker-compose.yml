@@ -33,6 +33,8 @@ services:
       - "5433:5432"
     volumes:
       - food_db_data:/var/lib/postgresql/data
+      # ADDED: This line loads the init.sql to create the table
+      - ./services/food-service/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   food-service:
     build: ./services/food-service
