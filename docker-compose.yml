@@ -22,6 +22,52 @@ services:
     expose:
       - "5000"
 
+  food-postgres:
+    image: postgres:15
+    container_name: food-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: food_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - food_db_data:/var/lib/postgresql/data
+
+  food-service:
+    build: ./services/food-service
+    container_name: food-service
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@food-postgres:5432/food_db
+      JWT_SECRET: super-secret-key
+    depends_on:
+      - food-postgres
+    ports:
+      - "5001:5001"
+
+  order-postgres:
+    image: postgres:15
+    container_name: order-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: order_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - order_db_data:/var/lib/postgresql/data
+      - ./services/order-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  order-service:
+    build: ./services/order-service
+    container_name: order-service
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@order-postgres:5432/order_db
+      JWT_SECRET: super-secret-key
+    depends_on:
+      - order-postgres
+    ports:
+      - "5002:5002"
 
   nginx:
     image: nginx:alpine
@@ -31,6 +77,10 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - auth-service
+      - food-service
+      - order-service
 
 volumes:
   postgres_data:
+  food_db_data:
+  order_db_data:

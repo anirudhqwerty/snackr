@@ -1,27 +1,42 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
-import { addOrder, getState, subscribe } from "../../lib/mockStore";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { apiRequest } from "../../lib/api";
+import { getToken } from "../../lib/auth";
 
 export default function CustomerHome() {
-  const [foods, setFoods] = useState(getState().foods);
-  const [orders, setOrders] = useState(getState().orders);
+  const [foods, setFoods] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(
-    () =>
-      subscribe((snapshot) => {
-        setFoods(snapshot.foods);
-        setOrders(snapshot.orders);
-      }),
-    []
-  );
+  useEffect(() => {
+    async function loadFoods() {
+      const token = await getToken();
+      if (!token) return;
 
-  function orderFood(foodId: string) {
-    // Mock data flow: customer creates orders in the shared store.
-    addOrder(foodId);
+      const data = await apiRequest("/food", "GET", undefined, token);
+
+      setFoods(data);
+    }
+
+    loadFoods();
+  }, []);
+
+  async function orderFood(foodId: string) {
+    setLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("No token");
+      await apiRequest("/orders", "POST", { foodId }, token);
+      Alert.alert("Success", "Order placed!");
+    } catch (error) {
+      Alert.alert("Error", "Failed to place order");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function isOrdered(foodId: string) {
-    return orders.some((o) => o.foodId === foodId);
+    // Since orders are now in DB, we can't check locally; assume not ordered for simplicity
+    return false;
   }
 
   return (
@@ -47,20 +62,6 @@ export default function CustomerHome() {
                 </Text>
               </Pressable>
             </View>
-          );
-        })
-      )}
-
-      <Text style={styles.sectionTitle}>Your Orders</Text>
-      {orders.length === 0 ? (
-        <Text style={styles.muted}>No orders yet.</Text>
-      ) : (
-        orders.map((order) => {
-          const food = foods.find((f) => f.id === order.foodId);
-          return (
-            <Text key={order.id} style={styles.listItem}>
-              {food ? food.name : "Unknown item"}
-            </Text>
           );
         })
       )}

@@ -1,19 +1,53 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
-import { getState, subscribe, updateOrderStatus } from "../../lib/mockStore";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { apiRequest } from "../../lib/api";
+import { getToken } from "../../lib/auth";
 
 export default function DeliveryHome() {
-  const [foods, setFoods] = useState(getState().foods);
-  const [orders, setOrders] = useState(getState().orders);
+  const [foods, setFoods] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(
-    () =>
-      subscribe((snapshot) => {
-        setFoods(snapshot.foods);
-        setOrders(snapshot.orders);
-      }),
-    []
-  );
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const [foodData, orderData] = await Promise.all([
+        apiRequest("/food", "GET", undefined, token),
+        apiRequest("/orders", "GET", undefined, token),
+      ]);
+
+      setFoods(foodData);
+      setOrders(orderData);
+    } catch (error) {
+      Alert.alert("Error", "Failed to load data");
+    }
+  }
+
+  async function updateOrder(orderId: string, action: "pick" | "deliver") {
+    setLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("No token");
+
+      await apiRequest(
+        `/orders/${orderId}/${action}`,
+        "PATCH",
+        undefined,
+        token,
+      );
+      await loadData(); // Refresh data
+    } catch (error) {
+      Alert.alert("Error", `Failed to ${action} order`);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -34,15 +68,15 @@ export default function DeliveryHome() {
               <View style={styles.actions}>
                 <Pressable
                   style={[styles.button, styles.secondaryButton]}
-                  onPress={() => updateOrderStatus(order.id, "picked")}
-                  disabled={order.status !== "pending"}
+                  onPress={() => updateOrder(order.id, "pick")}
+                  disabled={order.status !== "pending" || loading}
                 >
                   <Text style={styles.buttonText}>Pick Order</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.button, styles.secondaryButton]}
-                  onPress={() => updateOrderStatus(order.id, "delivered")}
-                  disabled={order.status !== "picked"}
+                  onPress={() => updateOrder(order.id, "deliver")}
+                  disabled={order.status !== "picked" || loading}
                 >
                   <Text style={styles.buttonText}>Mark Delivered</Text>
                 </Pressable>

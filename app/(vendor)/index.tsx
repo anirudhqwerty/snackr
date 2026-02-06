@@ -1,18 +1,33 @@
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
-import { addFood, getState, subscribe } from "../../lib/mockStore";
+import { apiRequest } from "../../lib/api";
+import { getToken } from "../../lib/auth";
 
 export default function VendorHome() {
   const [foodName, setFoodName] = useState("");
-  const [foods, setFoods] = useState(getState().foods);
+  const [foods, setFoods] = useState<any[]>([]);
 
-  useEffect(() => subscribe((snapshot) => setFoods(snapshot.foods)), []);
+  async function loadFoods() {
+    const token = await getToken();
 
-  function handleAddFood() {
-    // Mock data flow: vendor creates foods in the shared store.
-    addFood(foodName);
-    setFoodName("");
+    const data = await apiRequest("/food", "GET", undefined, token);
+    setFoods(data);
   }
+
+  async function addFood() {
+    if (!foodName.trim()) return;
+
+    const token = await getToken();
+
+    await apiRequest("/food", "POST", { name: foodName }, token);
+
+    setFoodName("");
+    loadFoods();
+  }
+
+  useEffect(() => {
+    loadFoods();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -25,7 +40,7 @@ export default function VendorHome() {
         onChangeText={setFoodName}
       />
 
-      <Pressable style={styles.button} onPress={handleAddFood}>
+      <Pressable style={styles.button} onPress={addFood}>
         <Text style={styles.buttonText}>Add Food</Text>
       </Pressable>
 
