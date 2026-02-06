@@ -29,3 +29,5 @@ export async function apiRequest(
 
   return data;
 }
+
+// this is the communication layer

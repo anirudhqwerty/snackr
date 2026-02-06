@@ -35,10 +35,10 @@ export default function Login() {
         { email, password }
       );
 
-      // ✅ store JWT securely
+      // store JWT securely
       await saveToken(response.token);
 
-      // ✅ redirect to app entry (will call /auth/me)
+      // redirect to app entry (will call /auth/me)
       router.replace("/");
     } catch (err: any) {
       setError(err.message || "Login failed");

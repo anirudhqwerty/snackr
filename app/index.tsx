@@ -1,12 +1,10 @@
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
-import { useEffect, useState } from "react";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { useEffect } from "react";
 import { router } from "expo-router";
 import { getToken, removeToken } from "../lib/auth";
 import { apiRequest } from "../lib/api";
 
 export default function Index() {
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     async function bootstrap() {
       const token = await getToken();
@@ -17,18 +15,17 @@ export default function Index() {
       }
 
       try {
-        const user = await apiRequest(
-          "/auth/me",
-          "GET",
-          undefined,
-          token
-        );
+        const user = await apiRequest("/auth/me", "GET", undefined, token);
 
-        console.log("Authenticated user:", user);
-
-        // For now, just stop here
-        // Next step: role-based routing
-        setLoading(false);
+        if (user.role === "customer") {
+          router.replace("/(customer)");
+        } else if (user.role === "vendor") {
+          router.replace("/(vendor)");
+        } else if (user.role === "delivery") {
+          router.replace("/(delivery)");
+        } else {
+          throw new Error("Unknown role");
+        }
       } catch {
         await removeToken();
         router.replace("/login");
@@ -38,17 +35,9 @@ export default function Index() {
     bootstrap();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.center}>
-      <Text>You are logged in 🎉</Text>
+      <ActivityIndicator size="large" />
     </View>
   );
 }
