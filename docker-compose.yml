@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: auth_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # ADDED: Load the auth table creation script
+      - ./services/auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   auth-service:
     build: ./services/auth-service

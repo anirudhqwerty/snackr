@@ -31,7 +31,7 @@ export default function VendorHome() {
 
     try {
       const token = await getToken();
-      await apiRequest("/food", "POST", { name: foodName }, token);
+      await apiRequest("/food", "POST", { name: foodName }, token ?? undefined);
       setFoodName("");
       loadFoods();
     } catch (e) {
